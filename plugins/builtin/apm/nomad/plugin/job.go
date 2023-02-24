@@ -3,6 +3,7 @@ package plugin
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -30,7 +31,12 @@ func (a *APMPlugin) queryTaskGroup(q string) (sdk.TimestampedMetrics, error) {
 	}
 	a.logger.Debug("expanded query", "from", q, "to", fmt.Sprintf("%# v", query))
 
+	//zcz: mock random number here. metrics is a []float64
 	metrics, err := a.getTaskGroupResourceUsage(query)
+	for idx := range metrics {
+		metrics[idx] = rand.Float64() * 100
+		a.logger.Info("zcz: randomly generated metric result for query ", query, ", value is ", metrics[idx])
+	}
 	if err != nil {
 		return nil, err
 	}
