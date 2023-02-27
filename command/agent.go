@@ -276,6 +276,7 @@ func (c *AgentCommand) Run(args []string) int {
 	c.args = args
 
 	parsedConfig, configPaths := c.readConfig()
+
 	if parsedConfig == nil {
 		fmt.Println("Run 'nomad-autoscaler agent --help' for more information.")
 		return 1
@@ -361,6 +362,9 @@ func (c *AgentCommand) readConfig() (*config.Agent, []string) {
 
 	flags := flag.NewFlagSet("agent", flag.ContinueOnError)
 	flags.Usage = func() { c.Help() }
+
+	//zcz: first determine if this runs in an standalone(sl)(only-autoscaler) mode
+	flags.BoolVar(&cmdConfig.Sl, "sl", false, "")
 
 	// Specify our top level CLI flags.
 	flags.Var((*flaghelper.StringFlag)(&configPath), "config", "")

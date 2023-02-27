@@ -30,6 +30,8 @@ import (
 // The string reference of a duration can include "ns", "us" (or "µs"), "ms",
 // "s", "m", "h" suffixes.
 type Agent struct {
+	// zcz: determines if now is running in a standalone(only autoscaler without nomad) demo mode
+	Sl bool `hcl:"sl,optional"`
 
 	// LogLevel is the level of the logs to emit.
 	LogLevel string `hcl:"log_level,optional"`
@@ -595,6 +597,9 @@ func (a *Agent) Merge(b *Agent) *Agent {
 
 	result := *a
 
+	if b.Sl {
+		result.Sl = true
+	}
 	if b.EnableDebug {
 		result.EnableDebug = true
 	}

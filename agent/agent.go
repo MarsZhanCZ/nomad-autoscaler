@@ -51,18 +51,32 @@ func NewAgent(c *config.Agent, configPaths []string, logger hclog.Logger) *Agent
 func (a *Agent) Run() error {
 	defer a.stop()
 
+	println(a.config.Sl)
+	if a.config.Sl {
+		println("now we are in the special SL mode.")
+	} else {
+		println("now we are not in Sl mode.")
+	}
+
 	// Create context to handle propagation to downstream routines.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Generate the Nomad client.
+	// if !a.config.Sl {
+	// 	if err := a.generateNomadClient(); err != nil {
+	// 		return err
+	// 	}
+	// }
 	if err := a.generateNomadClient(); err != nil {
 		return err
 	}
 
 	// Generate the Consul client
-	if err := a.generateConsulClient(); err != nil {
-		return err
+	if !a.config.Sl {
+		if err := a.generateConsulClient(); err != nil {
+			return err
+		}
 	}
 
 	// launch plugins
@@ -71,11 +85,13 @@ func (a *Agent) Run() error {
 	}
 
 	// Setup the telemetry sinks.
-	inMem, err := a.setupTelemetry(a.config.Telemetry)
-	if err != nil {
-		return fmt.Errorf("failed to setup telemetry: %v", err)
+	if !a.config.Sl {
+		inMem, err := a.setupTelemetry(a.config.Telemetry)
+		if err != nil {
+			return fmt.Errorf("failed to setup telemetry: %v", err)
+		}
+		a.inMemSink = inMem
 	}
-	a.inMemSink = inMem
 
 	// Setup policy manager.
 	policyEvalCh, err := a.setupPolicyManager()
