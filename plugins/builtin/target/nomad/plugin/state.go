@@ -162,6 +162,7 @@ func (jsh *jobScaleStatusHandler) start() {
 	}
 
 	for {
+		// todo:zcz: here is nomad retrive webapp scaling result. It is hard to achieve if we don't have nomad to monitor the app.
 		status, meta, err := jsh.client.Jobs().ScaleStatus(jsh.jobID, q)
 
 		// Update the handlers state.
