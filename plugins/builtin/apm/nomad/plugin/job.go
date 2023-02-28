@@ -32,7 +32,8 @@ func (a *APMPlugin) queryTaskGroup(q string) (sdk.TimestampedMetrics, error) {
 	a.logger.Debug("expanded query", "from", q, "to", fmt.Sprintf("%# v", query))
 
 	//zcz: mock random number here. metrics is a []float64
-	metrics, err := a.getTaskGroupResourceUsage(query)
+	//metrics, err := a.getTaskGroupResourceUsage(query)
+	var metrics = []float64{0}
 	for idx := range metrics {
 		metrics[idx] = rand.Float64() * 100
 		a.logger.Info("zcz: randomly generated metric result for query ", query, ", value is ", metrics[idx])
@@ -181,7 +182,9 @@ func (a *APMPlugin) getAllocatedMemForTaskGroup(job, taskgroup string) (int, err
 
 // getTaskGroup returns a task group configuration from a job.
 func (a *APMPlugin) getTaskGroup(job, taskgroup string) (*api.TaskGroup, error) {
+	println("zcz: get Task Group Info")
 	jobInfo, _, err := a.client.Jobs().Info(job, nil)
+	fmt.Printf("%v/n", jobInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get info for job: %v", err)
 	}

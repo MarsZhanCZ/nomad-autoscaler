@@ -62,15 +62,15 @@ func (a *Agent) Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Generate the Nomad client.
-	// if !a.config.Sl {
-	// 	if err := a.generateNomadClient(); err != nil {
-	// 		return err
-	// 	}
-	// }
-	if err := a.generateNomadClient(); err != nil {
-		return err
+	//Generate the Nomad client.
+	if !a.config.Sl {
+		if err := a.generateNomadClient(); err != nil {
+			return err
+		}
 	}
+	// if err := a.generateNomadClient(); err != nil {
+	// 	return err
+	// }
 
 	// Generate the Consul client
 	if !a.config.Sl {

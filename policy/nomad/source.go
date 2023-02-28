@@ -112,10 +112,10 @@ func (s *Source) MonitorIDs(ctx context.Context, req policy.MonitorIDsReq) {
 
 		select {
 		case <-ctx.Done():
-			s.log.Trace("stopping ID subscription")
+			s.log.Debug("stopping ID subscription")
 			return
 		case <-s.reloadCh:
-			s.log.Trace("reloading policies")
+			s.log.Debug("reloading policies")
 			continue
 		case <-blockingQueryCompleteCh:
 		}
@@ -125,10 +125,10 @@ func (s *Source) MonitorIDs(ctx context.Context, req policy.MonitorIDsReq) {
 			policy.HandleSourceError(s.Name(), fmt.Errorf("failed to call the Nomad list policies API: %v", err), req.ErrCh)
 			select {
 			case <-ctx.Done():
-				s.log.Trace("stopping ID subscription")
+				s.log.Debug("stopping ID subscription")
 				return
 			case <-s.reloadCh:
-				s.log.Trace("reloading policies")
+				s.log.Debug("reloading policies")
 				continue
 			case <-time.After(10 * time.Second):
 				continue
@@ -137,9 +137,12 @@ func (s *Source) MonitorIDs(ctx context.Context, req policy.MonitorIDsReq) {
 
 		// If the index has not changed, the query returned because the timeout
 		// was reached, therefore start the next query loop.
+		println("index has changed? BEFORE:", meta.LastIndex, q.WaitIndex)
 		if !blocking.IndexHasChanged(meta.LastIndex, q.WaitIndex) {
-			continue
+			//zcz: don't skip the time below for buffering
+			//continue
 		}
+		println("index has changed? AFTER:", meta.LastIndex, q.WaitIndex)
 
 		var policyIDs []policy.PolicyID
 
@@ -160,6 +163,8 @@ func (s *Source) MonitorIDs(ctx context.Context, req policy.MonitorIDsReq) {
 
 		// Send new policy IDs in the channel.
 		req.ResultCh <- policy.IDMessage{IDs: policyIDs, Source: s.Name()}
+		// zcz: don't keep trying until a buffer time gap.
+		time.Sleep(1200 * time.Second)
 	}
 }
 
@@ -174,7 +179,7 @@ func (s *Source) MonitorPolicy(ctx context.Context, req policy.MonitorPolicyReq)
 	defer close(req.ResultCh)
 	defer close(req.ErrCh)
 
-	log.Trace("starting policy blocking query watcher")
+	log.Debug("starting policy blocking query watcher")
 
 	q := &api.QueryOptions{WaitTime: 5 * time.Minute, WaitIndex: 1}
 	for {
@@ -201,17 +206,17 @@ func (s *Source) MonitorPolicy(ctx context.Context, req policy.MonitorPolicyReq)
 
 		select {
 		case <-ctx.Done():
-			log.Trace("done with policy monitoring")
+			log.Debug("done with policy monitoring")
 			return
 		case <-req.ReloadCh:
-			log.Trace("reloading policy monitor")
+			log.Debug("reloading policy monitor")
 			continue
 		case <-blockingQueryCompleteCh:
 		}
 
 		// Return immediately if context is closed.
 		if ctx.Err() != nil {
-			log.Trace("done with policy monitoring")
+			log.Debug("done with policy monitoring")
 			return
 		}
 
@@ -220,10 +225,10 @@ func (s *Source) MonitorPolicy(ctx context.Context, req policy.MonitorPolicyReq)
 			policy.HandleSourceError(s.Name(), fmt.Errorf("failed to get policy: %v", err), req.ErrCh)
 			select {
 			case <-ctx.Done():
-				log.Trace("done with policy monitoring")
+				log.Debug("done with policy monitoring")
 				return
 			case <-req.ReloadCh:
-				log.Trace("reloading policy monitor")
+				log.Debug("reloading policy monitor")
 				continue
 			case <-time.After(10 * time.Second):
 				continue
@@ -233,7 +238,8 @@ func (s *Source) MonitorPolicy(ctx context.Context, req policy.MonitorPolicyReq)
 		// If the index has not changed, the query returned because the timeout
 		// was reached, therefore start the next query loop.
 		if !blocking.IndexHasChanged(meta.LastIndex, q.WaitIndex) {
-			continue
+			//zcz: don't skip, let it wait the buffer time below
+			//continue
 		}
 
 		// GH-165: update the wait index. After this point there is a
@@ -258,6 +264,9 @@ func (s *Source) MonitorPolicy(ctx context.Context, req policy.MonitorPolicyReq)
 		s.canonicalizePolicy(&autoPolicy)
 
 		req.ResultCh <- autoPolicy
+
+		//zcz: wait for buffer some time.
+		time.Sleep(1200 * time.Second)
 	}
 }
 

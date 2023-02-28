@@ -69,6 +69,7 @@ func (m *Manager) Run(ctx context.Context, evalCh chan<- *sdk.ScalingEvaluation)
 
 LOOP:
 	for {
+		println("start manager Run Loop")
 		select {
 		case <-ctx.Done():
 			m.log.Trace("stopping policy manager")
@@ -82,7 +83,7 @@ LOOP:
 			continue
 
 		case policyIDs := <-policyIDsCh:
-			m.log.Trace("received policy IDs listing",
+			m.log.Debug("received policy IDs listing",
 				"num", len(policyIDs.IDs), "policy_source", policyIDs.Source)
 
 			m.lock.Lock()
@@ -99,14 +100,14 @@ LOOP:
 
 				// Check if we already have a handler for this policy.
 				if _, ok := m.handlers[policyID]; ok {
-					m.log.Trace("handler already exists",
+					m.log.Debug("handler already exists",
 						"policy_id", policyID, "policy_source", policyIDs.Source)
 					continue
 				}
 
 				// Create and store a new handler and use its channels to monitor
 				// the policy for changes.
-				m.log.Trace("creating new handler",
+				m.log.Debug("creating new handler",
 					"policy_id", policyID, "policy_source", policyIDs.Source)
 
 				h := NewHandler(policyID, m.log, m.pluginManager, m.policySource[policyIDs.Source])
